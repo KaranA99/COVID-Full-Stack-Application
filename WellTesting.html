@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Well Testing</title>
+        <style>
+            table, th, td{
+                border: 1px solid black;
+                padding: 5px;
+                border-collapse: collapse;
+            }
+        </style>
+    </head>
+    <body>
+        <form>
+            <h2>Well Testing</h2>
+            <label>Well Barcode: </label>
+            <input type="text"><br><br>
+            <label>Poll Barcode: </label>
+            <input type="text"><br><br>
+            <label>Result: </label>
+            <select>
+                <option value="progress">In Progress</option>
+                <option value="negative">Negative</option>
+                <option value="positive">Positive</option>
+            </select><br><br>
+            <input type="submit" value="Add">
+        </form><br><br>
+        <table id="table">
+            <tr>
+                <th>Well Barcode</th>
+                <th>Pool Barcode</th>
+                <th>Result</th>
+            </tr>
+        </table><br>
+        <button style="font-size: medium;">Edit</button>
+        <button style="font-size: medium;">Delete</button>
+    </body>
+</html>
