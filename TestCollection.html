@@ -5,12 +5,106 @@
     </head>
     <body>
         <h2>Test Collection</h2>
-        <form>
+        <form id="form">
             <label>Employee ID: </label>
-            <input type="text"><br><br>
+            <input id = "empid" type="text"><br><br>
             <label>Test Barcode: </label>
-            <input type="text"><br><br>
-            <input type="submit" value="Add">
+            <input id = "barcode" type="text"><br><br>
+            <input onclick="modifyData(event)" type="submit" value="Add">
         </form>
     </body>
+    <table class = "table">
+        <tr>
+            <th> Employee Id </th>
+            <th> Test Barcode </th>
+        </tr>
+        <table class = "generated"></table>
+        <input onclick="modifyData(event)" type="submit" value="Delete">
+    <table>
 </html>
+<script>
+    let form = document.getElementById("form");
+    console.log(form);
+    form.addEventListener("submit",event => {event.preventDefault()});
+
+    async function modifyData(event){
+        if (event.target.defaultValue == "Add"){
+            var counter = -1;
+            empid = document.getElementById('empid').value
+            barcode = document.getElementById('barcode').value
+            fetch("/labhome/testcollection", {
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    "event": event.target.defaultValue,
+                    "empid": empid,
+                    "barcode": barcode
+                })
+            })
+            .then(response => {
+                return response.json()
+            }).then(data => {
+                const html = data.map(user => {
+                    counter += 1
+                    return `
+                    <div style="width:300px">
+                        <input style="float:left" class="empid_checkbox" type="checkbox" value="${counter}"></input>
+                        <div style="float:left">${user.empid} </div>
+                        <div style="margin-left:100px">${user.barcode} </div>
+                        </br>
+                    </div>
+                    `
+                    
+                }).join("")
+                document.querySelector('.generated').innerHTML = html
+            }).catch(error => {
+                console.log(error)
+            })
+        }
+        
+        if (event.target.defaultValue == "Delete"){
+            var counter = -1
+            var array = document.getElementsByClassName('empid_checkbox');
+            var checkedValues = [];
+            for (var i = 0; i < array.length; i++){
+                if (array[i].checked){
+                    checkedValues.push(array[i].value)
+                }
+            }
+            console.log(checkedValues)
+            fetch("/labhome/testcollection", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    "event": event.target.defaultValue,
+                    "array": checkedValues
+                })
+            })
+            .then(response => {
+                return response.json()
+            }).then(data => {
+                const html = data.map(user => {
+                    counter += 1
+                    return `
+                    <div style="width:300px">
+                        <input style="float:left" class="empid_checkbox" type="checkbox" value="${counter}"></input>
+                        <div style="float:left">${user.empid} </div>
+                        <div style="margin-left:100px">${user.barcode} </div>
+                        </br>
+                    </div>
+                    `
+                }).join("")
+                document.querySelector('.generated').innerHTML = html
+            })
+            .catch(error =>{
+                console.log(error)
+            })
+        }
+    }
+        
+            
+</script>
