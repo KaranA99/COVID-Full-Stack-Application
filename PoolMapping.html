@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-    <head>
+    <head><script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
         <title>Pool Mapping</title>
         <style>
             #barcodeTable {
@@ -12,21 +12,82 @@
     <body>
         <h2>Pool Mapping</h2>
         <label>Pool Barcode: </label>
-        <input type="text"><br><br>
+        <input id = "poolBarcode" type="text"><br><br>
         <label>Test Barcodes: </label>
         <table id="barcodeTable">
             <tr>
-                <td><input type="text"></td>
-                <td>Delete</td>
+                <td><input class = "barcodes" type="text"></td>
+                <td class = "btnDelete">Delete</td>
+            </tr>
+            <tr">
+                <td><input class = "barcodes" type="text"></td>
+                <td class = "btnDelete">Delete</td>
             </tr>
             <tr>
-                <td><input type="text"></td>
-                <td>Delete</td>
-            </tr>
-            <tr>
-                <td><input type="submit" value="Add More Rows"></td>
+                <td><input class = "barcodes" type="text"></td>
+                <td class = "btnDelete">Delete</td>
             </tr>
         </table><br>
-        <input type="submit" value="Submit Pool">
+        <input onclick="addRows() "type="submit" value="Add More Rows">
+        <input onclick = modifyData(event) type="submit" value="Submit Pool">
     </body>
 </html>
+<script>
+    $(document).ready(function(){
+        $("#barcodeTable").on('click','.btnDelete',function(){
+            $(this).closest('tr').remove();
+            });
+        })
+
+    function addRows(){
+        html = (`<tr>
+                    <td><input class = "barcodes" type="text"></td>
+                    <td>Delete</td>
+                </tr>`)
+        document.getElementById('barcodeTable').innerHTML+=html
+    }
+    
+    async function modifyData(event){
+        var counter = -1;
+        if (event.target.defaultValue == "Submit Pool"){
+            var barcodesArray = document.getElementsByClassName('barcodes')
+            var poolBarcode = document.getElementById('poolBarcode').value
+            var barcodes = []
+            for (var i = 0; i <= barcodesArray.length; i++){
+                if (barcodesArray[i]){
+                    barcodes.push(barcodesArray[i].value)
+                }
+            }
+            fetch("/labhome/poolmapping", {
+                    method: 'POST',
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        "action": event.target.defaultValue,
+                        "barcodes": barcodes,
+                        "poolBarcode":poolBarcode
+                    })
+                })
+                .then(response => {
+                    return response.json()
+                }).then(data => {
+                    const html = data.map(user => {
+                        counter += 1
+                        return `
+                        <div style="width:300px">
+                            <input style="float:left" class="empid_checkbox" type="checkbox" value="${counter}"></input>
+                            <div style="float:left">${user.empid} </div>
+                            <div style="margin-left:100px">${user.barcode} </div>
+                            </br>
+                        </div>
+                        `
+                        
+                    }).join("")
+                    document.querySelector('.generated').innerHTML = html
+                }).catch(error => {
+                    console.log(error)
+                })
+            }
+        }
+</script>

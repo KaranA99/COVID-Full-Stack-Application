@@ -12,7 +12,7 @@ function getConnection() {
         host:'localhost',
         user: 'root',
         password: 'pass4root',
-        database: 'finalproject'
+        database: 'finalProject316'
     })
 }
 
@@ -24,7 +24,7 @@ app
     .post((req,res) => {
         labid = req.body.labid
         password = req.body.password
-        getConnection().query(`SELECT * FROM finalproject WHERE labid = '${labid}' AND password = '${password}'`, (err,results) => {
+        getConnection().query(`SELECT * FROM employee WHERE employeeID = '${labid}' AND passcode = '${password}'`, (err,results) => {
             if (err) throw err;
             if (results.length > 0){
                 res.redirect("/labhome")
@@ -51,18 +51,18 @@ app
         barcode = req.body.barcode
         if (action == "Add"){
             if (empid == "" || barcode == ""){
-                getConnection().query(`SELECT empid, barcode FROM finalproject`, (err,results) =>{
+                getConnection().query(`SELECT employeeID, testBarcode FROM employeetest`, (err,results) =>{
                     if (err) throw err;
                     res.json(results)
                 })
             }
             else{
-                getConnection().query(`SELECT * FROM finalproject WHERE empid = '${empid}' AND password = '${barcode}'`, (err,results) => {
+                getConnection().query(`SELECT * FROM employeetest WHERE employeeID = '${empid}' AND testBarcode = '${barcode}'`, (err,results) => {
                     if (err) throw err;
                     if (results.length == 0){
-                        getConnection().query(`INSERT INTO finalproject (empid,barcode) VALUES (${empid},${barcode})`, (err,results1) =>{
+                        getConnection().query(`INSERT INTO employeetest (employeeID,testBarcode) VALUES (${empid},${barcode})`, (err,results1) =>{
                             if (err) throw err
-                            getConnection().query(`SELECT empid, barcode FROM finalproject`, (err,results) =>{
+                            getConnection().query(`SELECT employeeID, testBarcode FROM employeetest`, (err,results) =>{
                                 if (err) throw err;
                                 res.json(results)
                             })
@@ -76,11 +76,12 @@ app
             checkedValues = req.body.array
             var resultsStore = [];
             for (var i = 0; i < checkedValues.length; i++){
-                getConnection().query(`SELECT * FROM finalproject LIMIT ${checkedValues[i]},1`, (err,results) =>{
+                getConnection().query(`SELECT * FROM employeetest LIMIT ${checkedValues[i]},1`, (err,results) =>{
+                    console.log(results)
                     if (err) throw err
-                    getConnection().query(`DELETE FROM finalproject WHERE empid = ${results[0].empid} AND barcode = ${results[0].barcode}`, (err,results1 =>{
+                    getConnection().query(`DELETE FROM employeetest WHERE employeeID = ${results[0].employeeID} AND testBarcode = ${results[0].testBarcode}`, (err,results1 =>{
                         if (err) throw err;
-                        getConnection().query(`SELECT empid, barcode FROM finalproject`, (err,results2) =>{
+                        getConnection().query(`SELECT employeeID, testBarcode FROM employeetest`, (err,results2) =>{
                             if (err) throw err;
                         })
                     }))
@@ -96,7 +97,41 @@ app
         res.sendFile('./PoolMapping.html',{root: __dirname })
     })
     .post((req,res) =>{
-        
+        barcodes = req.body.barcodes
+        poolBarcode = req.body.poolBarcode
+        action = req.body.action
+        if (action == "Submit Pool"){
+            if (poolBarcode == ""){
+                getConnection().query(`SELECT poolBarcode, testBarcode FROM poolmap`, (err,results) =>{
+                    if (err) throw err;
+                    res.json(results)
+                })
+            }
+            else{
+                getConnection().query(`SELECT * FROM Pool WHERE poolBarcode = '${poolBarcode}'`, (err,results) => {
+                    if (err) throw err;
+                    if (results.length == 0){
+                        getConnection().query(`INSERT INTO Pool (poolBarcode) VALUES (${poolBarcode})`, (err,results1) => {
+                            console.log(barcodes)
+                            if (err) throw err;
+                            for (var i = 0; i < barcodes.length; i++){
+                                if (barcodes[i])
+                                    getConnection().query(`INSERT INTO poolmap (testBarcode,poolBarcode) VALUES (${barcodes[i]},${poolBarcode})`, (err,results1) =>{
+                                        if (err) throw err
+                                        // getConnection().query(`SELECT empid, barcode FROM finalproject`, (err,results) =>{
+                                        //     if (err) throw err;
+                                        //     res.json(results)
+                                        // })
+                                    })           
+                            }             
+                        })
+                    }
+                })
+            }
+        }
+        if (action == "Edit Pool"){
+
+        }
     })
 
 
