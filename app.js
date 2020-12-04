@@ -16,32 +16,36 @@ function getConnection() {
     })
 }
 
+app.get('/', function(req, res){
+    res.redirect('/labtech');
+});
+
 app
-    .route('/')
+    .route('/labtech')
     .get((req, res) => {
-        res.sendFile('./LabLogin.html',{root: __dirname })
+        res.sendFile('./labtech.html',{root: __dirname })
     })
     .post((req,res) => {
         labid = req.body.labid
         password = req.body.password
-        getConnection().query(`SELECT * FROM employee WHERE employeeID = '${labid}' AND passcode = '${password}'`, (err,results) => {
+        getConnection().query(`SELECT * FROM LabEmployee WHERE labID = '${labid}' AND password = '${password}'`, (err,results) => {
             if (err) throw err;
             if (results.length > 0){
-                res.redirect("/labhome")
+                res.redirect("/labtech/labhome")
                 res.end()
             }
             else{
-                res.sendFile('./LabLogin.html',{root: __dirname })
+                res.sendFile('./labtech.html',{root: __dirname })
             }
         })
     })
 
-app.get('/labhome', function(req, res) {
+app.get('/labtech/labhome', function(req, res) {
     res.sendFile('./LabHome.html',{root: __dirname })
 });
 
 app
-    .route("/labhome/testcollection")
+    .route("/labtech/labhome/testcollection")
     .get((req,res) => {
         res.sendFile('./TestCollection.html',{root: __dirname })
     })
@@ -92,7 +96,7 @@ app
     })
 
 app
-    .route('/labhome/poolmapping')
+    .route('/labtech/labhome/poolmapping')
     .get((req, res) => {
         res.sendFile('./PoolMapping.html',{root: __dirname })
     })
@@ -115,15 +119,16 @@ app
                             console.log(barcodes)
                             if (err) throw err;
                             for (var i = 0; i < barcodes.length; i++){
-                                if (barcodes[i])
+                                if (barcodes[i]){
                                     getConnection().query(`INSERT INTO poolmap (testBarcode,poolBarcode) VALUES (${barcodes[i]},${poolBarcode})`, (err,results1) =>{
                                         if (err) throw err
-                                        // getConnection().query(`SELECT empid, barcode FROM finalproject`, (err,results) =>{
-                                        //     if (err) throw err;
-                                        //     res.json(results)
-                                        // })
-                                    })           
-                            }             
+                                    })        
+                                }  
+                            }   
+                            getConnection().query(`SELECT empid, barcode FROM finalproject`, (err,results) =>{
+                                if (err) throw err;
+                                res.json(results)
+                            })          
                         })
                     }
                 })
@@ -135,16 +140,12 @@ app
     })
 
 
-app.get('/labhome/welltesting', function(req, res) {
+app.get('/labtech/labhome/welltesting', function(req, res) {
     res.sendFile('./WellTesting.html',{root: __dirname })
 });
 
 app.get('/employee', function(req, res) {
-    res.sendFile('./Employee.html',{root: __dirname })
-});
-
-app.get('/labtech', function(req, res) {
-    res.sendFile('./index.html',{root: __dirname })
+    res.sendFile('./EmployeeLogin.html',{root: __dirname })
 });
 
 app.listen('3000', err =>{
