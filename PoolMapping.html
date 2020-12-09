@@ -30,6 +30,17 @@
         </table><br>
         <input onclick="addRows() "type="submit" value="Add More Rows">
         <input onclick = modifyData(event) type="submit" value="Submit Pool">
+        <input onclick = modifyData(event) type="submit" value="Edit Pool">
+
+    </body>
+    <body>
+        <table class = "table">
+            <tr>
+                <th >Pool Barcode</th>
+                <th style="width:200px">Test Barcodes</th>
+            </tr>
+        </table>
+        <table class = "generated"></table>
     </body>
 </html>
 <script>
@@ -38,8 +49,60 @@
             $(this).closest('tr').remove();
             });
         })
+        $("#barcodeTable").ready(function(){
+            showTable()
+        })
+    
+    function showTable(){
+        var counter = -1
+        fetch("/labtech/labhome/poolmapping", {
+            method: 'POST',
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                "action": "Show"
+            })
+        })
+        .then(response => {
+            return response.json()
+        }).then(data => {
+            pool = new Map()
+            for (var i = 0; i < data.length; i++){
+                if (!(pool.has(data[i].poolBarcode))){
+                    pool.set(data[i].poolBarcode, [data[i].testBarcode])
+                }
+                else{
+                    var arr = pool.get(data[i].poolBarcode)
+                    arr.push(data[i].testBarcode)
+                    pool.set(data[i].poolBarcode, arr)
+                }
+            }
+            let printer = (function(input){
+                let html = ""
+                input.forEach(function(value,key){
+                    html +=     
+                    `
+                    <div style="width:300px">
+                        <input style="float:left" class="empid_checkbox" type="checkbox" value="${key},${value}"></input>
+                        <div style="float:left">${key} </div>
+                        <div style="margin-left:150px">${value} </div>
+                        </br>
+                    </div>
+                    `
+                })
+                return html
+            })
+            document.querySelector('.generated').innerHTML = printer(pool)
+        }).catch(error => {
+            console.log(error)
+        })
+    }
 
     function addRows(){
+        storeValues = []
+        barcodes = document.getElementsByClassName("barcodes")
+        console.log(barcodes)
         html = (`<tr>
                     <td><input class = "barcodes" type="text"></td>
                     <td>Delete</td>
@@ -54,11 +117,11 @@
             var poolBarcode = document.getElementById('poolBarcode').value
             var barcodes = []
             for (var i = 0; i <= barcodesArray.length; i++){
-                if (barcodesArray[i]){
+                if (barcodesArray[i] && barcodesArray[i].value != ""){
                     barcodes.push(barcodesArray[i].value)
                 }
             }
-            fetch("/labhome/poolmapping", {
+            fetch("/labtech/labhome/poolmapping", {
                     method: 'POST',
                     headers: {
                         "Content-Type": "application/json"
@@ -72,19 +135,113 @@
                 .then(response => {
                     return response.json()
                 }).then(data => {
-                    const html = data.map(user => {
-                        counter += 1
-                        return `
-                        <div style="width:300px">
-                            <input style="float:left" class="empid_checkbox" type="checkbox" value="${counter}"></input>
-                            <div style="float:left">${user.empid} </div>
-                            <div style="margin-left:100px">${user.barcode} </div>
-                            </br>
-                        </div>
-                        `
-                        
-                    }).join("")
-                    document.querySelector('.generated').innerHTML = html
+                    pool = new Map()
+                    for (var i = 0; i < data.length; i++){
+                        if (!(pool.has(data[i].poolBarcode))){
+                            pool.set(data[i].poolBarcode, [data[i].testBarcode])
+                        }
+                        else{
+                            var arr = pool.get(data[i].poolBarcode)
+                            arr.push(data[i].testBarcode)
+                            pool.set(data[i].poolBarcode, arr)
+                        }
+                    }
+                    let printer = (function(input){
+                        let html = ""
+                        input.forEach(function(value,key){
+                            html +=     
+                            `
+                            <div style="width:300px">
+                                <input style="float:left" class="empid_checkbox" type="checkbox" value="${key,value}"></input>
+                                <div style="float:left">${key} </div>
+                                <div style="margin-left:150px">${value} </div>
+                                </br>
+                            </div>
+                            `
+                        })
+                        return html
+                    })
+                    document.querySelector('.generated').innerHTML = printer(pool)
+                }).catch(error => {
+                    console.log(error)
+                })
+            }
+            if (event.target.defaultValue == "Edit Pool"){
+                var counter = -1
+                var array = document.getElementsByClassName('empid_checkbox');
+                var ticker = [];
+                for (var i = 0; i < array.length; i++){
+                    if (array[i].checked){
+                        if (ticker.length == 1){
+                            window.alert("You can not have more than one box checked.")
+                        }
+                        else
+                            ticker.push(array[i])
+                    }
+                }
+                var checkedValues = [];
+                
+                values = ticker[0].value.split(',')
+                document.getElementById("poolBarcode").value = values[0]
+                if (values.length - 1 > document.getElementsByClassName("barcodes").length){
+                    window.alert("You need to add more rows to edit this pool map.")
+                }
+                else{
+                    for (var i = 1; i < values.length; i++){
+                        temp = i - 1
+                        document.getElementsByClassName("barcodes")[temp].value = values[i]
+                    }
+                }
+
+                var barcodesArray = document.getElementsByClassName('barcodes')
+                var poolBarcode = document.getElementById('poolBarcode').value
+                var barcodes = []
+                for (var i = 0; i <= barcodesArray.length; i++){
+                    if (barcodesArray[i] && barcodesArray[i].value != ""){
+                        barcodes.push(barcodesArray[i].value)
+                    }
+                }
+                fetch("/labtech/labhome/poolmapping", {
+                    method: 'POST',
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        "action": event.target.defaultValue,
+                        "barcodes": barcodes,
+                        "poolBarcode":poolBarcode
+                    })
+                })
+                .then(response => {
+                    return response.json()
+                }).then(data => {
+                    pool = new Map()
+                    for (var i = 0; i < data.length; i++){
+                        if (!(pool.has(data[i].poolBarcode))){
+                            pool.set(data[i].poolBarcode, [data[i].testBarcode])
+                        }
+                        else{
+                            var arr = pool.get(data[i].poolBarcode)
+                            arr.push(data[i].testBarcode)
+                            pool.set(data[i].poolBarcode, arr)
+                        }
+                    }
+                    let printer = (function(input){
+                        let html = ""
+                        input.forEach(function(value,key){
+                            html +=     
+                            `
+                            <div style="width:300px">
+                                <input style="float:left" class="empid_checkbox" type="checkbox" value="${key,value}"></input>
+                                <div style="float:left">${key} </div>
+                                <div style="margin-left:150px">${value} </div>
+                                </br>
+                            </div>
+                            `
+                        })
+                        return html
+                    })
+                    document.querySelector('.generated').innerHTML = printer(pool)
                 }).catch(error => {
                     console.log(error)
                 })

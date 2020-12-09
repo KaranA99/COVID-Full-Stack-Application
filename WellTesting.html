@@ -23,7 +23,7 @@
                 <option value="negative">Negative</option>
                 <option value="positive">Positive</option>
             </select><br><br>
-            <input type="submit" value="Add">
+            <input onclick="editRow()" type="submit" value="Add">
         </form><br><br>
         <table id="table">
             <tr>
@@ -36,3 +36,13 @@
         <button style="font-size: medium;">Delete</button>
     </body>
 </html>
+<script>
+    function editRow(){
+        html = (`<tr>
+                    <td><input class = "rows" type="text"></td>
+                    <td><input class = "rows" type="text"></td>
+                    <td><input class = "rows" type="text"></td>
+                </tr>`)
+        document.getElementById('table').innerHTML+=html
+    }
+</script>

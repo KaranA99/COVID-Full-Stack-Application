@@ -16,15 +16,14 @@
     <table class = "table">
         <tr>
             <th> Employee Id </th>
-            <th> Test Barcode </th>
+            <th style="width:200px"> Test Barcode </th>
         </tr>
         <table class = "generated"></table>
         <input onclick="modifyData(event)" type="submit" value="Delete">
-    <table>
+    <table> 
 </html>
 <script>
     let form = document.getElementById("form");
-    console.log(form);
     form.addEventListener("submit",event => {event.preventDefault()});
 
     async function modifyData(event){
@@ -32,7 +31,7 @@
             var counter = -1;
             empid = document.getElementById('empid').value
             barcode = document.getElementById('barcode').value
-            fetch("/labhome/testcollection", {
+            fetch("/labtech/labhome/testcollection", {
                 method: 'POST',
                 headers: {
                     "Content-Type": "application/json"
@@ -52,7 +51,7 @@
                     <div style="width:300px">
                         <input style="float:left" class="empid_checkbox" type="checkbox" value="${counter}"></input>
                         <div style="float:left">${user.employeeID} </div>
-                        <div style="margin-left:100px">${user.testBarcode} </div>
+                        <div style="margin-left:150px">${user.testBarcode} </div>
                         </br>
                     </div>
                     `
@@ -73,8 +72,7 @@
                     checkedValues.push(array[i].value)
                 }
             }
-            console.log(checkedValues)
-            fetch("/labhome/testcollection", {
+            fetch("/labtech/labhome/testcollection", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
