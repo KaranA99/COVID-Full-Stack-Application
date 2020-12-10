@@ -72,7 +72,7 @@ app
                         var mysqlTimestamp = moment(Date.now()).format('YYYY-MM-DD HH:mm:ss');
                         getConnection().query(`INSERT INTO employeetest (employeeID,testBarcode,collectionTime,collectedBy) VALUES ('${empid}','${barcode}','${mysqlTimestamp}','${labid_global}')`, (err,results1) =>{
                             if (err) throw err
-                            getConnection().query(`SELECT employeeID, testBarcode FROM employeetest`, (err,results) =>{
+                            getConnection().query(`SELECT employeeID, testBarcode FROM employeetest WHERE collectedBy = ${labid_global}`, (err,results) =>{
                                 if (err) throw err;
                                 res.json(results)
                             })
@@ -83,9 +83,8 @@ app
         }
         if (action == "Delete"){
             checkedValues = req.body.array
-            var resultsStore = [];
             for (var i = 0; i < checkedValues.length; i++){
-                getConnection().query(`SELECT * FROM employeetest LIMIT ${checkedValues[i]},1`, (err,results) =>{
+                getConnection().query(`SELECT * FROM employeetest WHERE collectedBy = ${labid_global} LIMIT ${checkedValues[i]},1`, (err,results) =>{
                     if (err) throw err
                     getConnection().query(`DELETE FROM employeetest WHERE employeeID = ${results[0].employeeID} AND testBarcode = ${results[0].testBarcode} AND collectedBy = ${labid_global}`, (err,results1 =>{
                         if (err) throw err;
@@ -95,7 +94,7 @@ app
                     }))
                 })
             }
-            res.json(resultsStore)            
+            res.json([])            
         }
     })
 
@@ -142,21 +141,83 @@ app
                 })
             }
         }
-        if (action == "Edit Pool"){
-            
-        }
         if (action == "Show"){
             getConnection().query(`SELECT poolBarcode, testBarcode FROM poolmap`, (err,results) =>{
                 if (err) throw err;
                 res.json(results)
             })   
         }
+        if (action == "Delete Pool"){
+            counter = req.body.counter
+            getConnection().query(`SELECT * FROM poolmap LIMIT ${counter},1`, (err,results) =>{
+                if (err) throw err
+                getConnection().query(`DELETE FROM poolmap WHERE testBarcode = ${results[0].testBarcode} AND poolBarcode = ${results[0].poolBarcode}`, (err,results1 =>{
+                    if (err) throw err;
+                    getConnection().query(`DELETE FROM pool WHERE poolBarcode = ${results[0].poolBarcode}`, (err,results2 =>{
+                        if (err) throw err;
+                        getConnection().query(`SELECT poolBarcode, testBarcode FROM poolmap`, (err,results3) =>{
+                            if (err) throw err;
+                            res.json([])
+                        })
+                    }))
+                }))
+            })
+        }
     })
 
 
-app.get('/labtech/labhome/welltesting', function(req, res) {
-    res.sendFile('./WellTesting.html',{root: __dirname })
-});
+app
+    .route('/labtech/labhome/welltesting')
+    .get((req, res) =>{
+        res.sendFile('./WellTesting.html',{root: __dirname })
+    })
+    .post((req,res) =>{
+        action = req.body.action
+        wellBarcode = req.body.wellBarcode
+        poolBarcode = req.body.poolBarcode
+        result = req.body.result
+        if (action == "Add"){
+            if (wellBarcode == "" || poolBarcode == ""){
+                getConnection().query(`SELECT poolBarcode, wellBarcode, result FROM welltesting`, (err,results) =>{
+                    if (err) throw err;
+                    res.json(results)
+                })
+            }
+            else{
+                getConnection().query(`SELECT * FROM well WHERE wellbarcode = '${wellBarcode}'`, (err,results) => {
+                    if (err) throw err;
+                    if (results.length == 0){
+                        getConnection().query(`INSERT INTO well (wellBarcode) VALUES ('${wellBarcode}')`, (err,results) =>{
+                            var testingStartTime = moment(Date.now()).format('YYYY-MM-DD HH:mm:ss');
+                            getConnection().query(`INSERT INTO wellTesting (poolBarcode,wellBarcode,testingStartTime,result) VALUES ('${poolBarcode}','${wellBarcode}','${testingStartTime}','${result}')`, (err,results1) =>{
+                                if (err) throw err
+                                getConnection().query(`SELECT poolBarcode, wellBarcode, result FROM welltesting`, (err,results) =>{
+                                    if (err) throw err;
+                                    res.json(results)
+                                })
+                            })       
+                        })                 
+                    }
+                })
+            }
+        }
+        if (action == "Delete"){
+            checkedValues = req.body.array
+            for (var i = 0; i < checkedValues.length; i++){
+                getConnection().query(`SELECT * FROM welltesting LIMIT ${checkedValues[i]},1`, (err,results) =>{
+                    if (err) throw err
+                    getConnection().query(`DELETE FROM welltesting WHERE poolBarcode = ${results[0].poolBarcode} AND wellBarcode = ${results[0].wellBarcode}`, (err,results1 =>{
+                        if (err) throw err;
+                        getConnection().query(`DELETE FROM well WHERE wellBarcode = ${results[0].wellBarcode}`, (err,results2 =>{
+                            if (err) throw err;
+                        }))
+                    }))
+                })
+            }
+            console.log(1)
+            res.json([])
+        }
+    }) 
 
 app
     .route('/employee')
