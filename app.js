@@ -138,6 +138,33 @@ app
                             }   
                         })
                     }
+                    else{
+                        getConnection().query(`DELETE FROM poolmap WHERE poolBarcode = ${poolBarcode};`, (err, results) =>{
+                            if (err) throw err;
+                            getConnection().query(`DELETE FROM pool WHERE poolBarcode = '${poolBarcode}';`, (err,results2) =>{
+                                if (err) throw err;
+                                getConnection().query(`INSERT INTO Pool (poolBarcode) VALUES ('${poolBarcode}')`, (err,results1) => {
+                                    if (err) throw err;
+                                    for (var i = 0; i < barcodes.length; i++){
+                                        if (i == barcodes.length - 1){
+                                            getConnection().query(`INSERT INTO poolmap (testBarcode,poolBarcode) VALUES (${barcodes[i]},${poolBarcode})`, (err,results2) =>{
+                                                if (err) throw err
+                                                getConnection().query(`SELECT poolBarcode, testBarcode FROM poolmap`, (err,results) =>{
+                                                    if (err) throw err
+                                                    res.json(results)
+                                                })  
+                                            })
+                                        }
+                                        else{
+                                            getConnection().query(`INSERT INTO poolmap (testBarcode,poolBarcode) VALUES (${barcodes[i]},${poolBarcode})`, (err,results2) =>{
+                                                if (err) throw err
+                                            })        
+                                        }
+                                    }   
+                                })
+                            })
+                        })
+                    }
                 })
             }
         }
@@ -148,19 +175,17 @@ app
             })   
         }
         if (action == "Delete Pool"){
-            counter = req.body.counter
-            getConnection().query(`SELECT * FROM poolmap LIMIT ${counter},1`, (err,results) =>{
-                if (err) throw err
-                getConnection().query(`DELETE FROM poolmap WHERE testBarcode = ${results[0].testBarcode} AND poolBarcode = ${results[0].poolBarcode}`, (err,results1 =>{
+            array = req.body.array
+            for (var i = 1; i < array.length - 1; i++){
+                getConnection().query(`DELETE FROM poolmap WHERE testBarcode = '${array[i]}' AND poolBarcode = '${array[0]}';`, (err,results1) =>{
                     if (err) throw err;
-                    getConnection().query(`DELETE FROM pool WHERE poolBarcode = ${results[0].poolBarcode}`, (err,results2 =>{
-                        if (err) throw err;
-                        getConnection().query(`SELECT poolBarcode, testBarcode FROM poolmap`, (err,results3) =>{
-                            if (err) throw err;
-                            res.json([])
-                        })
-                    }))
-                }))
+                })
+            }
+            getConnection().query(`DELETE FROM pool WHERE poolBarcode = '${array[0]}';`, (err,results2) =>{
+                getConnection().query(`SELECT poolBarcode, testBarcode FROM poolmap;`, (err,results3) =>{
+                    if (err) throw err;
+                    res.json([])
+                })
             })
         }
     })
@@ -178,25 +203,50 @@ app
         result = req.body.result
         if (action == "Add"){
             if (wellBarcode == "" || poolBarcode == ""){
-                getConnection().query(`SELECT poolBarcode, wellBarcode, result FROM welltesting`, (err,results) =>{
+                getConnection().query(`SELECT poolBarcode, wellBarcode, result FROM welltesting;`, (err,results) =>{
                     if (err) throw err;
                     res.json(results)
                 })
             }
             else{
-                getConnection().query(`SELECT * FROM well WHERE wellbarcode = '${wellBarcode}'`, (err,results) => {
+                getConnection().query(`SELECT * FROM well WHERE wellbarcode = '${wellBarcode}';`, (err,results) => {
                     if (err) throw err;
                     if (results.length == 0){
-                        getConnection().query(`INSERT INTO well (wellBarcode) VALUES ('${wellBarcode}')`, (err,results) =>{
+                        getConnection().query(`INSERT INTO well (wellBarcode) VALUES ('${wellBarcode}');`, (err,results) =>{
                             var testingStartTime = moment(Date.now()).format('YYYY-MM-DD HH:mm:ss');
-                            getConnection().query(`INSERT INTO wellTesting (poolBarcode,wellBarcode,testingStartTime,result) VALUES ('${poolBarcode}','${wellBarcode}','${testingStartTime}','${result}')`, (err,results1) =>{
+                            getConnection().query(`INSERT INTO wellTesting (poolBarcode,wellBarcode,testingStartTime,result) VALUES ('${poolBarcode}','${wellBarcode}','${testingStartTime}','${result}');`, (err,results1) =>{
                                 if (err) throw err
-                                getConnection().query(`SELECT poolBarcode, wellBarcode, result FROM welltesting`, (err,results) =>{
+                                getConnection().query(`SELECT poolBarcode, wellBarcode, result FROM welltesting;`, (err,results) =>{
                                     if (err) throw err;
                                     res.json(results)
                                 })
                             })       
                         })                 
+                    }
+                    else{
+                        getConnection().query(`SELECT testingStartTime FROM welltesting WHERE wellBarcode = ${wellBarcode};`, (err, results) =>{
+                            var testingStartTime = results[0].testingStartTime
+                            var utc = moment.utc(testingStartTime, 'YYYY-MM-DD HH:mm:ss')
+                            var local = utc.local()
+                            testingStartTime = local.format('YYYY-MM-DD HH:mm:ss')
+                            if (err) throw err;
+                            getConnection().query(`DELETE FROM welltesting WHERE wellBarcode = ${wellBarcode};`, (err, results1) =>{
+                                if (err) throw err;
+                                getConnection().query(`DELETE FROM well WHERE wellBarcode = '${wellBarcode}';`, (err,results2) =>{
+                                    if (err) throw err;
+                                    getConnection().query(`INSERT INTO well (wellBarcode) VALUES ('${wellBarcode}');`, (err,results3) =>{
+                                        var testingEndTime = moment(Date.now()).format('YYYY-MM-DD HH:mm:ss');
+                                        getConnection().query(`INSERT INTO wellTesting (poolBarcode,wellBarcode,testingStartTime,testingEndTime,result) VALUES ('${poolBarcode}','${wellBarcode}','${testingStartTime}','${testingEndTime}','${result}');`, (err,results4) =>{
+                                            if (err) throw err
+                                            getConnection().query(`SELECT poolBarcode, wellBarcode, result FROM welltesting;`, (err,results) =>{
+                                                if (err) throw err;
+                                                res.json(results)
+                                            })
+                                        })       
+                                    })  
+                                })
+                            })    
+                        })
                     }
                 })
             }
@@ -214,7 +264,6 @@ app
                     }))
                 })
             }
-            console.log(1)
             res.json([])
         }
     }) 
@@ -227,12 +276,19 @@ app
     .post((req,res) => {
         email = req.body.email
         password = req.body.password
-        res.sendFile('./EmployeeLogin.html',{root: __dirname })
         getConnection().query(`SELECT * FROM Employee WHERE email = '${email}' AND passcode = '${password}'`, (err,results) => {
             if (err) throw err;
             if (results.length > 0){
-                res.redirect("/employee")
-                res.end()
+                getConnection().query(`SELECT ET.testBarcode FROM employee E, employeeTest ET WHERE E.employeeID = ET.employeeID`, (err,results1) => {
+                    if (err) throw err;
+                    getConnection().query(`SELECT PM.poolBarcode FROM poolmap PM, employeeTest ET WHERE PM.testBarcode = ET.testBarcode;`, (err,results2) => {
+                        if (err) throw err;
+                        getConnection().query(`SELECT WT.testingEndTime,WT.result FROM welltesting WT, poolmap PM WHERE WT.poolBarcode = PM.poolBarcode;`, (err,results3) => {
+                            if (err) throw err;
+                            res.json(results3)
+                        })
+                    })
+                })
             }
             else{
                 res.sendFile('./labtech.html',{root: __dirname })

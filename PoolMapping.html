@@ -181,7 +181,6 @@
                             ticker.push(array[i])
                     }
                 }
-                var checkedValues = [];
                 values = ticker[0].value.split(',')
                 var old_poolbarcode = document.getElementById("poolBarcode").value
                 document.getElementById("poolBarcode").value = values[0]
@@ -189,7 +188,7 @@
                     window.alert("You need to add more rows to edit this pool map.")
                 }
                 else{
-                    for (var i = 1; i < values.length; i++){
+                    for (var i = 1; i < values.length - 1; i++){
                         temp = i - 1
                         document.getElementsByClassName("barcodes")[temp].value = values[i]
                     }
@@ -214,7 +213,7 @@
                     },
                     body: JSON.stringify({
                         "action": event.target.defaultValue,
-                        "counter": ticker[0].value.split(',').slice(-1)[0]
+                        "array": ticker[0].value.split(',')
                     })
                 })
                 .then(response => {

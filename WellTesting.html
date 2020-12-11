@@ -14,11 +14,11 @@
         <form id ="form">
             <h2>Well Testing</h2>
             <label >Well Barcode: </label>
-            <input id = "wellBarcode" type="text"><br><br>
+            <input class = "barcodes" id = "wellBarcode" type="text"><br><br>
             <label>Poll Barcode: </label>
-            <input id = "poolBarcode" type="text"><br><br>
+            <input class = "barcodes" id = "poolBarcode" type="text"><br><br>
             <label>Result: </label>
-            <select id = "result">
+            <select class = "barcodes" id = "result">
                 <option value="in progress">In Progress</option>
                 <option value="negative">Negative</option>
                 <option value="positive">Positive</option>
@@ -68,7 +68,7 @@
                         counter += 1
                         return `
                         <tr>
-                            <td style="width:11px;height:29px"><input style="float:left" class="empid_checkbox" type="checkbox" value="${counter}"></input></td>
+                            <td style="width:11px;height:29px"><input style="float:left" class="empid_checkbox" type="checkbox" value="${user.wellBarcode},${user.poolBarcode},${result},${counter}"></input></td>
                             <td style="width:103px;">${user.wellBarcode} </td>
                             <td style="width:102px;">${user.poolBarcode} </td>
                             <td style="width:55px;">${user.result} </td>
@@ -81,30 +81,28 @@
                     console.log(error)
                 })
         if (event.target.defaultValue == "Edit"){
-            // var array = document.getElementsByClassName('empid_checkbox');
-            // var ticker = [];
-            // for (var i = 0; i < array.length; i++){
-            //     if (array[i].checked){
-            //         if (ticker.length == 1){
-            //             window.alert("You can not have more than one box checked.")
-            //         }
-            //         else
-            //             ticker.push(array[i])
-            //     }
-            // }
-            // var checkedValues = [];
-            // values = ticker[0].value.split(',')
-            // var old_poolbarcode = document.getElementById("poolBarcode").value
-            // document.getElementById("poolBarcode").value = values[0]
-            // if (values.length - 1 > document.getElementsByClassName("barcodes").length){
-            //     window.alert("You need to add more rows to edit this pool map.")
-            // }
-            // else{
-            //     for (var i = 1; i < values.length; i++){
-            //         temp = i - 1
-            //         document.getElementsByClassName("barcodes")[temp].value = values[i]
-            //     }
-            // }
+            var array = document.getElementsByClassName('empid_checkbox');
+            var ticker = [];
+            for (var i = 0; i < array.length; i++){
+                if (array[i].checked){
+                    if (ticker.length == 1){
+                        window.alert("You can not have more than one box checked.")
+                    }
+                    else
+                        ticker.push(array[i])
+                }
+            }
+            values = ticker[0].value.split(',')
+            var old_poolbarcode = document.getElementById("poolBarcode").value
+            document.getElementById("poolBarcode").value = values[0]
+            if (values.length - 1 > document.getElementsByClassName("barcodes").length){
+                window.alert("You need to add more rows to edit this pool map.")
+            }
+            else{
+                for (var i = 0; i < values.length - 1; i++){
+                    document.getElementsByClassName("barcodes")[i].value = values[i]
+                }
+            }
         }
         if (event.target.defaultValue == "Delete"){
             var counter = -1
@@ -112,9 +110,10 @@
             var checkedValues = [];
             for (var i = 0; i < array.length; i++){
                 if (array[i].checked){
-                    checkedValues.push(array[i].value)
+                    checkedValues.push(array[i].value.split(',').slice(-1)[0])
                 }
             }
+            console.log(checkedValues)
             fetch("/labtech/labhome/welltesting", {
                 method: "POST",
                 headers: {

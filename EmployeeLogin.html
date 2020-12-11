@@ -27,9 +27,10 @@
                     <th>Result</th>
                 </tr>
             </table>
+            <table class = "generated"></table>
         </div>
     </body>
-    <script>
+    <script>        
         function retrieveData(){
             let form = document.getElementById("form")
             form.addEventListener("submit", event => {
@@ -51,14 +52,14 @@
                 return response.json()
             }).then(data => {
                 const html = data.map(user => {
-                    counter += 1
+                    var utc = moment.utc(user.testingEndTime, 'YYYY-MM-DD HH:mm:ss')
+                    var local = utc.local()
+                    testingEndTime = local.format('YYYY-MM-DD HH:mm:ss')
                     return `
-                    <div style="width:300px">
-                        <input style="float:left" class="empid_checkbox" type="checkbox" value="${counter}"></input>
-                        <div style="float:left">${user.employeeID} </div>
-                        <div style="margin-left:100px">${user.testBarcode} </div>
-                        </br>
-                    </div>
+                    <tr>
+                        <td style="width:102px;">${user.testingEndTime} </td>
+                        <td style="width:55px;">${user.result} </td>
+                    </tr>
                     `
                     
                 }).join("")
