@@ -279,16 +279,19 @@ app
         getConnection().query(`SELECT * FROM Employee WHERE email = '${email}' AND passcode = '${password}'`, (err,results) => {
             if (err) throw err;
             if (results.length > 0){
-                getConnection().query(`SELECT ET.testBarcode FROM employee E, employeeTest ET WHERE E.employeeID = ET.employeeID`, (err,results1) => {
-                    if (err) throw err;
-                    getConnection().query(`SELECT PM.poolBarcode FROM poolmap PM, employeeTest ET WHERE PM.testBarcode = ET.testBarcode;`, (err,results2) => {
-                        if (err) throw err;
-                        getConnection().query(`SELECT WT.testingEndTime,WT.result FROM welltesting WT, poolmap PM WHERE WT.poolBarcode = PM.poolBarcode;`, (err,results3) => {
-                            if (err) throw err;
-                            res.json(results3)
-                        })
-                    })
-                })
+                getConnection().query(` SELECT testingEndTime, result
+                                        FROM welltesting
+                                        WHERE poolBarcode IN (SELECT poolBarcode
+                                                               FROM poolMap
+                                                               WHERE testBarcode IN (SELECT testBarcode
+                                                                                     FROM employeetest
+                                                                                     WHERE employeeID IN (SELECT employeeID
+                                                                                                          FROM employee
+                                                                                                          WHERE employeeID ='${results[0].employeeID}')));`, (err,results) =>{
+                                                                                                              if (err) throw err;
+                                                                                                              res.json(results)
+                                                                                                          })
+                
             }
             else{
                 res.sendFile('./labtech.html',{root: __dirname })

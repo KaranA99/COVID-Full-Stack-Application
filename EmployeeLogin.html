@@ -52,9 +52,14 @@
                 return response.json()
             }).then(data => {
                 const html = data.map(user => {
-                    var utc = moment.utc(user.testingEndTime, 'YYYY-MM-DD HH:mm:ss')
-                    var local = utc.local()
-                    testingEndTime = local.format('YYYY-MM-DD HH:mm:ss')
+                    if (user.testingEndTime == null){
+                        user.testingEndTime = "Not Collected Yet"
+                    }
+                    else{
+                        arr = user.testingEndTime.split('T')
+                        temp = arr[0].split('-')
+                        user.testingEndTime = temp[1] += "/" + temp[2] + "/" + temp[0]
+                     }
                     return `
                     <tr>
                         <td style="width:102px;">${user.testingEndTime} </td>
