@@ -60,19 +60,19 @@ app
         barcode = req.body.barcode
         if (action == "Add"){
             if (empid == "" || barcode == ""){
-                getConnection().query(`SELECT employeeID, testBarcode FROM employeetest WHERE collectedBy = ${labid_global}`, (err,results) =>{
+                getConnection().query(`SELECT employeeID, testBarcode FROM employeetest WHERE collectedBy = '${labid_global}'`, (err,results) =>{
                     if (err) throw err;
                     res.json(results)
                 })
             }
             else{
-                getConnection().query(`SELECT * FROM employeetest WHERE employeeID = '${empid}' AND testBarcode = '${barcode}' AND collectedBy = ${labid_global}`, (err,results) => {
+                getConnection().query(`SELECT * FROM employeetest WHERE employeeID = '${empid}' AND testBarcode = '${barcode}' AND collectedBy = '${labid_global}'`, (err,results) => {
                     if (err) throw err;
                     if (results.length == 0){
                         var mysqlTimestamp = moment(Date.now()).format('YYYY-MM-DD HH:mm:ss');
                         getConnection().query(`INSERT INTO employeetest (employeeID,testBarcode,collectionTime,collectedBy) VALUES ('${empid}','${barcode}','${mysqlTimestamp}','${labid_global}')`, (err,results1) =>{
                             if (err) throw err
-                            getConnection().query(`SELECT employeeID, testBarcode FROM employeetest WHERE collectedBy = ${labid_global}`, (err,results) =>{
+                            getConnection().query(`SELECT employeeID, testBarcode FROM employeetest WHERE collectedBy = '${labid_global}'`, (err,results) =>{
                                 if (err) throw err;
                                 res.json(results)
                             })
@@ -84,14 +84,20 @@ app
         if (action == "Delete"){
             checkedValues = req.body.array
             for (var i = 0; i < checkedValues.length; i++){
-                getConnection().query(`SELECT * FROM employeetest WHERE collectedBy = ${labid_global} LIMIT ${checkedValues[i]},1`, (err,results) =>{
+                getConnection().query(`SELECT * FROM employeetest WHERE collectedBy = '${labid_global}' LIMIT ${checkedValues[i]},1;`, (err,results) =>{
                     if (err) throw err
-                    getConnection().query(`DELETE FROM employeetest WHERE employeeID = ${results[0].employeeID} AND testBarcode = ${results[0].testBarcode} AND collectedBy = ${labid_global}`, (err,results1 =>{
+                    getConnection().query(`SET foreign_key_checks = 0;`, (err,results1) =>{
                         if (err) throw err;
-                        getConnection().query(`SELECT employeeID, testBarcode FROM employeetest`, (err,results2) =>{
+                        getConnection().query(`DELETE FROM employeetest WHERE employeeID = '${results[0].employeeID}' AND testBarcode = '${results[0].testBarcode}' AND collectedBy = '${labid_global}';`, (err,results1) =>{
                             if (err) throw err;
+                            getConnection().query(`SET foreign_key_checks = 1;`, (err,results1) =>{
+                                if (err) throw err;
+                                getConnection().query(`SELECT employeeID, testBarcode FROM employeetest WHERE collectedBy = '${labid_global}';`, (err,results2) =>{
+                                    if (err) throw err;
+                                })
+                            })
                         })
-                    }))
+                    })
                 })
             }
             res.json([])            
@@ -256,12 +262,12 @@ app
             for (var i = 0; i < checkedValues.length; i++){
                 getConnection().query(`SELECT * FROM welltesting LIMIT ${checkedValues[i]},1`, (err,results) =>{
                     if (err) throw err
-                    getConnection().query(`DELETE FROM welltesting WHERE poolBarcode = ${results[0].poolBarcode} AND wellBarcode = ${results[0].wellBarcode}`, (err,results1 =>{
+                    getConnection().query(`DELETE FROM welltesting WHERE poolBarcode = ${results[0].poolBarcode} AND wellBarcode = ${results[0].wellBarcode}`, (err,results1) =>{
                         if (err) throw err;
-                        getConnection().query(`DELETE FROM well WHERE wellBarcode = ${results[0].wellBarcode}`, (err,results2 =>{
+                        getConnection().query(`DELETE FROM well WHERE wellBarcode = ${results[0].wellBarcode}`, (err,results2) =>{
                             if (err) throw err;
-                        }))
-                    }))
+                        })
+                    })
                 })
             }
             res.json([])
